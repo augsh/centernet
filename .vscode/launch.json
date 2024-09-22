@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python 带参数调试",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "${command:pickArgs}"
+      ]
+    },
+    {
+      "name": "调试 src/demo.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "ctdet",
+        "--demo",
+        "../images",
+        "--load_model",
+        "../models/ctdet_coco_dla_2x.pth"
+      ]
+    }
+  ]
+}

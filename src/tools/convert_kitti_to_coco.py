@@ -6,15 +6,18 @@ import pickle
 import json
 import numpy as np
 import cv2
-DATA_PATH = '../../data/kitti/'
-DEBUG = False
-# VAL_PATH = DATA_PATH + 'training/label_val/'
 import os
-SPLITS = ['3dop', 'subcnn'] 
-import _init_paths
+from tqdm import tqdm
+
+import _tools_init
+
 from utils.ddd_utils import compute_box_3d, project_to_image, alpha2rot_y
 from utils.ddd_utils import draw_box_3d, unproject_2d_to_3d
 
+DATA_PATH = '../../data/kitti/'
+DEBUG = False
+# VAL_PATH = DATA_PATH + 'training/label_val/'
+SPLITS = ['3dop', 'subcnn']
 '''
 #Values    Name      Description
 ----------------------------------------------------------------------------
@@ -36,66 +39,80 @@ from utils.ddd_utils import draw_box_3d, unproject_2d_to_3d
                      detection, needed for p/r curves, higher is better.
 '''
 
+
 def _bbox_to_coco_bbox(bbox):
-  return [(bbox[0]), (bbox[1]),
-          (bbox[2] - bbox[0]), (bbox[3] - bbox[1])]
+  return [(bbox[0]), (bbox[1]), (bbox[2] - bbox[0]), (bbox[3] - bbox[1])]
+
 
 def read_clib(calib_path):
   f = open(calib_path, 'r')
-  for i, line in enumerate(f):
+  lines = f.readlines()
+  f.close()
+  for i, line in enumerate(lines):
     if i == 2:
       calib = np.array(line[:-1].split(' ')[1:], dtype=np.float32)
       calib = calib.reshape(3, 4)
       return calib
 
-cats = ['Pedestrian', 'Car', 'Cyclist', 'Van', 'Truck',  'Person_sitting',
-        'Tram', 'Misc', 'DontCare']
+
+cats = [
+    'Pedestrian', 'Car', 'Cyclist', 'Van', 'Truck', 'Person_sitting', 'Tram',
+    'Misc', 'DontCare'
+]
 cat_ids = {cat: i + 1 for i, cat in enumerate(cats)}
 # cat_info = [{"name": "pedestrian", "id": 1}, {"name": "vehicle", "id": 2}]
-F = 721
-H = 384 # 375
-W = 1248 # 1242
-EXT = [45.75, -0.34, 0.005]
-CALIB = np.array([[F, 0, W / 2, EXT[0]], [0, F, H / 2, EXT[1]], 
-                  [0, 0, 1, EXT[2]]], dtype=np.float32)
-
 cat_info = []
 for i, cat in enumerate(cats):
   cat_info.append({'name': cat, 'id': i + 1})
 
 for SPLIT in SPLITS:
-  image_set_path = DATA_PATH + 'ImageSets_{}/'.format(SPLIT)
-  ann_dir = DATA_PATH + 'training/label_2/'
-  calib_dir = DATA_PATH + '{}/calib/'
+  image_set_dir = os.path.join(DATA_PATH, f'ImageSets_{SPLIT}')
+  if not os.path.isdir(image_set_dir):
+    print(f'Dir not exist, skipped: {image_set_dir}')
+    continue
   splits = ['train', 'val']
   # splits = ['trainval', 'test']
-  calib_type = {'train': 'training', 'val': 'training', 'trainval': 'training',
-                'test': 'testing'}
+  calib_type = {
+      'train': 'training',
+      'val': 'training',
+      'trainval': 'training',
+      'test': 'testing'
+  }
 
   for split in splits:
     ret = {'images': [], 'annotations': [], "categories": cat_info}
-    image_set = open(image_set_path + '{}.txt'.format(split), 'r')
+    f = open(os.path.join(image_set_dir, f'{split}.txt'), 'r')
+    lines = f.readlines()
+    f.close()
     image_to_id = {}
-    for line in image_set:
-      if line[-1] == '\n':
-        line = line[:-1]
+    for line in tqdm(lines):
+      line = line.strip()
+      if not line:
+        continue
       image_id = int(line)
-      calib_path = calib_dir.format(calib_type[split]) + '{}.txt'.format(line)
+      calib_path = os.path.join(DATA_PATH, calib_type[split], 'calib',
+                                f'{line}.txt')
       calib = read_clib(calib_path)
-      image_info = {'file_name': '{}.png'.format(line),
-                    'id': int(image_id),
-                    'calib': calib.tolist()}
+      image_info = {
+          'file_name': f'{line}.png',
+          'id': int(image_id),
+          'calib': calib.tolist()
+      }
       ret['images'].append(image_info)
       if split == 'test':
         continue
-      ann_path = ann_dir + '{}.txt'.format(line)
+      ann_path = os.path.join(DATA_PATH, calib_type[split], 'label_2',
+                              f'{line}.txt')
       # if split == 'val':
       #   os.system('cp {} {}/'.format(ann_path, VAL_PATH))
-      anns = open(ann_path, 'r')
-      
+      f = open(ann_path, 'r')
+      anns = f.readlines()
+      f.close()
+
       if DEBUG:
-        image = cv2.imread(
-          DATA_PATH + 'images/trainval/' + image_info['file_name'])
+        img_path = os.path.join(DATA_PATH, calib_type[split], 'image_2',
+                                image_info['file_name'])
+        image = cv2.imread(img_path)
 
       for ann_ind, txt in enumerate(anns):
         tmp = txt[:-1].split(' ')
@@ -108,17 +125,19 @@ for SPLIT in SPLITS:
         location = [float(tmp[11]), float(tmp[12]), float(tmp[13])]
         rotation_y = float(tmp[14])
 
-        ann = {'image_id': image_id,
-               'id': int(len(ret['annotations']) + 1),
-               'category_id': cat_id,
-               'dim': dim,
-               'bbox': _bbox_to_coco_bbox(bbox),
-               'depth': location[2],
-               'alpha': alpha,
-               'truncated': truncated,
-               'occluded': occluded,
-               'location': location,
-               'rotation_y': rotation_y}
+        ann = {
+            'image_id': image_id,
+            'id': int(len(ret['annotations']) + 1),
+            'category_id': cat_id,
+            'dim': dim,
+            'bbox': _bbox_to_coco_bbox(bbox),
+            'depth': location[2],
+            'alpha': alpha,
+            'truncated': truncated,
+            'occluded': occluded,
+            'location': location,
+            'rotation_y': rotation_y
+        }
         ret['annotations'].append(ann)
         if DEBUG and tmp[0] != 'DontCare':
           box_3d = compute_box_3d(dim, location, rotation_y)
@@ -134,7 +153,7 @@ for SPLIT in SPLITS:
           '''
           depth = np.array([location[2]], dtype=np.float32)
           pt_2d = np.array([(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2],
-                            dtype=np.float32)
+                           dtype=np.float32)
           pt_3d = unproject_2d_to_3d(pt_2d, depth, calib)
           pt_3d[1] += dim[0] / 2
           print('pt_3d', pt_3d)
@@ -143,10 +162,14 @@ for SPLIT in SPLITS:
         cv2.imshow('image', image)
         cv2.waitKey()
 
-
     print("# images: ", len(ret['images']))
     print("# annotations: ", len(ret['annotations']))
+
     # import pdb; pdb.set_trace()
-    out_path = '{}/annotations/kitti_{}_{}.json'.format(DATA_PATH, SPLIT, split)
-    json.dump(ret, open(out_path, 'w'))
-  
+    out_dir = os.path.join(DATA_PATH, 'annotations')
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, f'kitti_{SPLIT}_{split}.json')
+    f = open(out_path, 'w')
+    json.dump(ret, f, indent=2)
+    f.close()
+    print(f'Dump to {out_path}')

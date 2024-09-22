@@ -7,5 +7,6 @@ echo "WorkDir: $work_dir"
 source ./activate_env.sh pytorch
 
 cd ./src
-python3 ./demo.py ctdet --demo ../images --load_model ../models/ctdet_coco_dla_2x.pth
+python3 ./demo.py ctdet --demo ../images --load_model ../models/ctdet_coco_dla_2x.pth # 按空格
+
 
