@@ -84,6 +84,7 @@ for SPLIT in SPLITS:
     f = open(os.path.join(image_set_dir, f'{split}.txt'), 'r')
     lines = f.readlines()
     f.close()
+    lines = lines[:256] if split == 'train' else lines[:64] # debug
     image_to_id = {}
     for line in tqdm(lines):
       line = line.strip()
