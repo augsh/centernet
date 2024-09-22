@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python 带参数调试",
+      "name": "带参调试当前文件",
       "type": "debugpy",
       "request": "launch",
       "program": "${file}",
@@ -12,7 +12,7 @@
       ]
     },
     {
-      "name": "调试 src/demo.py",
+      "name": "demo.py ctdet",
       "type": "debugpy",
       "request": "launch",
       "program": "${file}",
@@ -23,6 +23,22 @@
         "../images",
         "--load_model",
         "../models/ctdet_coco_dla_2x.pth"
+      ]
+    },
+    {
+      "name": "demo.py ddd",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "ddd",
+        "--arch",
+        "dla_34",
+        "--demo",
+        "../images",
+        "--load_model",
+        "../models/ddd_3dop.pth"
       ]
     }
   ]
