@@ -333,10 +333,12 @@ class Debugger(object):
     self, img_path, dets, calib,
     center_thresh, pred, bev, img_id='out'):
     self.imgs[img_id] = cv2.imread(img_path)
-    # h, w = self.imgs[img_id].shape[:2]
+    h0, w0 = self.imgs[img_id].shape[:2]
     # pred = cv2.resize(pred, (h, w))
-    h, w = pred.shape[:2]
-    hs, ws = self.imgs[img_id].shape[0] / h, self.imgs[img_id].shape[1] / w
+    w, h = pred.shape[:2]
+    hs, ws = h0 / h, w0 / w
+    print(f'original resolution: {w0}x{h0}')
+    print(f'prediction resolution: {w}x{h}')
     self.imgs[img_id] = cv2.resize(self.imgs[img_id], (w, h))
     self.add_blend_img(self.imgs[img_id], pred, img_id)
     for cat in dets:
@@ -354,8 +356,11 @@ class Debugger(object):
             box_2d[:, 0] /= hs
             box_2d[:, 1] /= ws
             self.imgs[img_id] = draw_box_3d(self.imgs[img_id], box_2d, cl)
-    self.imgs[img_id] = np.concatenate(
-      [self.imgs[img_id], self.imgs[bev]], axis=1)
+    print(self.imgs[img_id].shape)
+    print(self.imgs[bev].shape)
+    # self.imgs[img_id] = np.concatenate(
+    #   [self.imgs[img_id], self.imgs[bev]], axis=1)
+    # self.imgs[img_id] = np.vstack([self.imgs[img_id], self.imgs[bev]])
 
   def add_2d_detection(
     self, img, dets, show_box=False, show_txt=True,
@@ -422,9 +427,9 @@ class Debugger(object):
             # for e in [[0, 1], [1, 2], [2, 3], [3, 0]]:
             for e in [[0, 1]]:
               t = 4 if e == [0, 1] else 1
-              cv2.line(bird_view, (rect[e[0]][0], rect[e[0]][1]),
-                      (rect[e[1]][0], rect[e[1]][1]), lc, t,
-                      lineType=cv2.LINE_AA)
+              pt1 = (int(rect[e[0]][0]), int(rect[e[0]][1]))
+              pt2 = (int(rect[e[1]][0]), int(rect[e[1]][1]))
+              cv2.line(bird_view, pt1, pt2, lc, t, lineType=cv2.LINE_AA)
     self.imgs[img_id] = bird_view
 
 

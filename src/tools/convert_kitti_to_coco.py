@@ -14,8 +14,9 @@ import _tools_init
 from utils.ddd_utils import compute_box_3d, project_to_image, alpha2rot_y
 from utils.ddd_utils import draw_box_3d, unproject_2d_to_3d
 
+DEBUG = True
+
 DATA_PATH = '../../data/kitti/'
-DEBUG = False
 # VAL_PATH = DATA_PATH + 'training/label_val/'
 SPLITS = ['3dop', 'subcnn']
 '''
@@ -65,6 +66,18 @@ cat_info = []
 for i, cat in enumerate(cats):
   cat_info.append({'name': cat, 'id': i + 1})
 
+color_map = {
+    'Pedestrian': (255, 0, 0),
+    'Car': (0, 255, 0),
+    'Cyclist': (0, 0, 255),
+    'Van': (0, 255, 255),
+    'Truck': (255, 0, 255),
+    'Person_sitting': (255, 255, 0),
+    'Tram': (0, 125, 125),
+    'Misc': (125, 0, 125),
+    'DontCare': (255, 255, 255)
+}
+
 for SPLIT in SPLITS:
   image_set_dir = os.path.join(DATA_PATH, f'ImageSets_{SPLIT}')
   if not os.path.isdir(image_set_dir):
@@ -80,11 +93,13 @@ for SPLIT in SPLITS:
   }
 
   for split in splits:
+    vis_dir = os.path.join(DATA_PATH, calib_type[split], 'vis')
+    os.makedirs(vis_dir, exist_ok=True)
     ret = {'images': [], 'annotations': [], "categories": cat_info}
     f = open(os.path.join(image_set_dir, f'{split}.txt'), 'r')
     lines = f.readlines()
     f.close()
-    lines = lines[:256] if split == 'train' else lines[:64] # debug
+    lines = lines[:256] if split == 'train' else lines[:64]  # debug
     image_to_id = {}
     for line in tqdm(lines):
       line = line.strip()
@@ -144,7 +159,7 @@ for SPLIT in SPLITS:
           box_3d = compute_box_3d(dim, location, rotation_y)
           box_2d = project_to_image(box_3d, calib)
           # print('box_2d', box_2d)
-          image = draw_box_3d(image, box_2d)
+          image = draw_box_3d(image, box_2d, color_map[tmp[0]])
           x = (bbox[0] + bbox[2]) / 2
           '''
           print('rot_y, alpha2rot_y, dlt', tmp[0], 
@@ -157,11 +172,13 @@ for SPLIT in SPLITS:
                            dtype=np.float32)
           pt_3d = unproject_2d_to_3d(pt_2d, depth, calib)
           pt_3d[1] += dim[0] / 2
-          print('pt_3d', pt_3d)
-          print('location', location)
+          # print('pt_3d', pt_3d)
+          # print('location', location)
       if DEBUG:
-        cv2.imshow('image', image)
-        cv2.waitKey()
+        # cv2.imshow('image', image)
+        # cv2.waitKey()
+        vis_path = os.path.join(vis_dir, image_info['file_name'])
+        cv2.imwrite(vis_path, image)
 
     print("# images: ", len(ret['images']))
     print("# annotations: ", len(ret['annotations']))

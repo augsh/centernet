@@ -50,21 +50,37 @@ def compute_orientation_3d(dim, location, rotation_y):
   return orientation_3d.transpose(1, 0)
 
 
-def draw_box_3d(image, corners, c=(0, 0, 255)):
+def draw_box_3d(image, corners, c=(0, 0, 255), alpha=0.4):
+  ''' Draw 3d bounding box in image
+  corners: (8,2) array of vertices for the 3d box in following order:
+        1 -------- 0
+       /|         /|
+      2 -------- 3 .
+      | |        | |
+      . 5 -------- 4
+      |/         |/
+      6 -------- 7
+  '''
   face_idx = [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
   for ind_f in range(3, -1, -1):
     f = face_idx[ind_f]
     for j in range(4):
       pt1 = (int(corners[f[j], 0]), int(corners[f[j], 1]))
       pt2 = (int(corners[f[(j + 1) % 4], 0]), int(corners[f[(j + 1) % 4], 1]))
-      cv2.line(image, pt1, pt2, c, 2, lineType=cv2.LINE_AA)
+      cv2.line(image, pt1, pt2, c, 1, lineType=cv2.LINE_AA)
     if ind_f == 0:
+      """ 在 front 画对角线
       pt1 = (int(corners[f[0], 0]), int(corners[f[0], 1]))
       pt2 = (int(corners[f[2], 0]), int(corners[f[2], 1]))
       cv2.line(image, pt1, pt2, c, 1, lineType=cv2.LINE_AA)
       pt1 = (int(corners[f[1], 0]), int(corners[f[1], 1]))
       pt2 = (int(corners[f[3], 0]), int(corners[f[3], 1]))
       cv2.line(image, pt1, pt2, c, 1, lineType=cv2.LINE_AA)
+      """
+      overlay = image.copy()
+      front_face_corners = corners[f].astype(int)
+      cv2.fillConvexPoly(overlay, front_face_corners, c)
+      image = cv2.addWeighted(image, 1 - alpha, overlay, alpha, 0)
   return image
 
 

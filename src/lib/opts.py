@@ -16,7 +16,7 @@ class opts(object):
                              help='coco | kitti | coco_hp | pascal')
     self.parser.add_argument('--exp_id', default='default')
     self.parser.add_argument('--test', action='store_true')
-    self.parser.add_argument('--debug', type=int, default=4,
+    self.parser.add_argument('--debug', type=int, default=0,
                              help='level of visualization.'
                                   '1: only show the final detection results'
                                   '2: show the network output features'
@@ -236,7 +236,7 @@ class opts(object):
     opt.lr_step = [int(i) for i in opt.lr_step.split(',')]
     opt.test_scales = [float(i) for i in opt.test_scales.split(',')]
 
-    opt.fix_res = not opt.keep_res
+    opt.fix_res = not opt.keep_res # 默认需要修改分辨率
     print('Fix size testing.' if opt.fix_res else 'Keep resolution testing.')
     opt.reg_offset = not opt.not_reg_offset
     opt.reg_bbox = not opt.not_reg_bbox

@@ -27,24 +27,44 @@ class KITTI(data.Dataset):
     if opt.trainval:
       split = 'trainval' if split == 'train' else 'test'
       self.img_dir = os.path.join(self.data_dir, 'images', split)
-      self.annot_path = os.path.join(
-        self.data_dir, 'annotations', 'kitti_{}.json').format(split)
+      self.annot_path = os.path.join(self.data_dir, 'annotations',
+                                     'kitti_{}.json').format(split)
     else:
-      self.annot_path = os.path.join(self.data_dir, 
-        'annotations', 'kitti_{}_{}.json').format(opt.kitti_split, split)
+      self.annot_path = os.path.join(self.data_dir, 'annotations',
+                                     'kitti_{}_{}.json').format(
+                                         opt.kitti_split, split)
     self.max_objs = 50
-    self.class_name = [
-      '__background__', 'Pedestrian', 'Car', 'Cyclist']
-    self.cat_ids = {1:0, 2:1, 3:2, 4:-3, 5:-3, 6:-2, 7:-99, 8:-99, 9:-1}
-    
+    self.class_name = ['__background__', 'Pedestrian', 'Car', 'Cyclist']
+    kitti_cat_ids = {
+        'Pedestrian': 1,
+        'Car': 2,
+        'Cyclist': 3,
+        'Van': 4,
+        'Truck': 5,
+        'Person_sitting': 6,
+        'Tram': 7,
+        'Misc': 8,
+        'DontCare': 9
+    }
+    self.cat_ids = {  # kitti id → class name id
+        1: 0,  # Pedestrian
+        2: 1,  # Car
+        3: 2,  # Cyclist
+        4: -3,  # Van
+        5: -3,  # Truck
+        6: -2,  # Person_sitting
+        7: -99,  # Tram
+        8: -99,  # Misc
+        9: -1  # DontCare
+    }
+
     self._data_rng = np.random.RandomState(123)
     self._eig_val = np.array([0.2141788, 0.01817699, 0.00341571],
                              dtype=np.float32)
-    self._eig_vec = np.array([
-        [-0.58752847, -0.69563484, 0.41340352],
-        [-0.5832747, 0.00994535, -0.81221408],
-        [-0.56089297, 0.71832671, 0.41158938]
-    ], dtype=np.float32)
+    self._eig_vec = np.array([[-0.58752847, -0.69563484, 0.41340352],
+                              [-0.5832747, 0.00994535, -0.81221408],
+                              [-0.56089297, 0.71832671, 0.41158938]],
+                             dtype=np.float32)
     self.split = split
     self.opt = opt
     self.alpha_in_degree = False
@@ -86,4 +106,3 @@ class KITTI(data.Dataset):
     os.system('./tools/kitti_eval/evaluate_object_3d_offline ' + \
               '../data/kitti/training/label_val ' + \
               '{}/results/'.format(save_dir))
-    
