@@ -16,29 +16,29 @@ from .base_trainer import BaseTrainer
 class DddLoss(torch.nn.Module):
   def __init__(self, opt):
     super(DddLoss, self).__init__()
-    self.crit = torch.nn.MSELoss() if opt.mse_loss else FocalLoss()
+    self.crit = torch.nn.MSELoss() if opt.mse_loss else FocalLoss() # FocalLoss
     self.crit_reg = L1Loss()
     self.crit_rot = BinRotLoss()
     self.opt = opt
   
-  def forward(self, outputs, batch):
+  def forward(self, outputs, batch): # input [1, 3, 384, 1280]
     opt = self.opt
 
     hm_loss, dep_loss, rot_loss, dim_loss = 0, 0, 0, 0
     wh_loss, off_loss = 0, 0
     for s in range(opt.num_stacks):
       output = outputs[s]
-      output['hm'] = _sigmoid(output['hm'])
-      output['dep'] = 1. / (output['dep'].sigmoid() + 1e-6) - 1.
+      output['hm'] = _sigmoid(output['hm']) # [1, 3, 96, 320]
+      output['dep'] = 1. / (output['dep'].sigmoid() + 1e-6) - 1. # [1, 1, 96, 320]
       
-      if opt.eval_oracle_dep:
+      if opt.eval_oracle_dep: # ×
         output['dep'] = torch.from_numpy(gen_oracle_map(
           batch['dep'].detach().cpu().numpy(), 
           batch['ind'].detach().cpu().numpy(), 
           opt.output_w, opt.output_h)).to(opt.device)
       
       hm_loss += self.crit(output['hm'], batch['hm']) / opt.num_stacks
-      if opt.dep_weight > 0:
+      if opt.dep_weight > 0: # √
         dep_loss += self.crit_reg(output['dep'], batch['reg_mask'],
                                   batch['ind'], batch['dep']) / opt.num_stacks
       if opt.dim_weight > 0:

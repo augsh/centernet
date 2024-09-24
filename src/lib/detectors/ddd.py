@@ -33,7 +33,7 @@ class DddDetector(BaseDetector):
     c = np.array([width / 2, height / 2], dtype=np.float32)
     if self.opt.keep_res:
       s = np.array([inp_width, inp_height], dtype=np.int32)
-    else:
+    else: # √
       s = np.array([width, height], dtype=np.int32)
 
     trans_input = get_affine_transform(c, s, 0, [inp_width, inp_height])

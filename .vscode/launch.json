@@ -5,6 +5,7 @@
       "name": "带参调试当前文件",
       "type": "debugpy",
       "request": "launch",
+      "cwd": "${workspaceFolder}",
       "program": "${file}",
       "console": "integratedTerminal",
       "args": [
@@ -15,7 +16,8 @@
       "name": "demo.py ctdet",
       "type": "debugpy",
       "request": "launch",
-      "program": "${file}",
+      "cwd": "${workspaceFolder}/src",
+      "program": "demo.py",
       "console": "integratedTerminal",
       "args": [
         "ctdet",
@@ -29,7 +31,8 @@
       "name": "demo.py ddd",
       "type": "debugpy",
       "request": "launch",
-      "program": "${file}",
+      "cwd": "${workspaceFolder}/src",
+      "program": "demo.py",
       "console": "integratedTerminal",
       "args": [
         "ddd",
@@ -39,6 +42,31 @@
         "../images",
         "--load_model",
         "../models/ddd_3dop.pth"
+      ]
+    },
+    {
+      "name": "train ddd",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/src",
+      "program": "main.py",
+      "console": "integratedTerminal",
+      "args": [
+        "ddd",
+        "--exp_id", "kitti_dla_2x",
+        "--arch", "dla_34",
+        "--dataset", "kitti",
+        "--batch_size", "4",
+        "--master_batch", "4",
+        "--lr", "5e-4",
+        "--lr_step", "90,120",
+        "--num_epochs", "1",
+        "--num_iters", "1",
+        "--val_intervals", "1",
+        "--debug", "4",
+        "--gpus", "0",
+        "--num_workers", "8",
+        "--load_model", "../models/ddd_3dop.pth"
       ]
     }
   ]

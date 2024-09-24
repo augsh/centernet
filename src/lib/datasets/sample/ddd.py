@@ -24,7 +24,7 @@ class DddDataset(data.Dataset):
                     dtype=np.float32)
     return bbox
 
-  def _convert_alpha(self, alpha):
+  def _convert_alpha(self, alpha): # 转为弧度制
     return math.radians(alpha + 45) if self.alpha_in_degree else alpha
 
   def __getitem__(self, index):
