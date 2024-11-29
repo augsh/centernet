@@ -53,13 +53,17 @@ def compute_orientation_3d(dim, location, rotation_y):
 def draw_box_3d(image, corners, c=(0, 0, 255), alpha=0.4):
   ''' Draw 3d bounding box in image
   corners: (8,2) array of vertices for the 3d box in following order:
-        1 -------- 0
-       /|         /|
-      2 -------- 3 .
-      | |        | |
-      . 5 -------- 4
-      |/         |/
-      6 -------- 7
+            1 ---------- 0
+           /|           /|
+          / |          / |
+         /  |         /  |
+        /   5 -------/-- 4
+       /|  /        /   /
+      2 ---------- 3   /
+      |  /         |  /
+      | /          | /
+      |/           |/
+      6 ---------- 7
   '''
   face_idx = [[0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
   for ind_f in range(3, -1, -1):
