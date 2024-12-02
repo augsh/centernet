@@ -16,6 +16,13 @@ from utils.ddd_utils import draw_box_3d, unproject_2d_to_3d
 
 DEBUG = True
 
+"""
+此脚本用于将KITTI数据集转换为COCO格式, 并可视化:
+1. 根据kitti/ImageSets_3dop下的txt索引文件, 分别处理训练集(256)和验证集(64)
+2. 读取KITTI数据集的图像、标注和校准信息, 转为COCO格式, 写入kitti/annotations下JSON文件
+3. DEBUG为True时将对标注的3D bbox进行可视化, 存入 kitti/vis 目录
+"""
+
 DATA_PATH = '../../data/kitti/'
 # VAL_PATH = DATA_PATH + 'training/label_val/'
 SPLITS = ['3dop', 'subcnn']
@@ -93,7 +100,7 @@ for SPLIT in SPLITS:
   }
 
   for split in splits:
-    vis_dir = os.path.join(DATA_PATH, calib_type[split], 'vis')
+    vis_dir = os.path.join(DATA_PATH, 'vis', split)
     os.makedirs(vis_dir, exist_ok=True)
     ret = {'images': [], 'annotations': [], "categories": cat_info}
     f = open(os.path.join(image_set_dir, f'{split}.txt'), 'r')
@@ -156,6 +163,12 @@ for SPLIT in SPLITS:
         }
         ret['annotations'].append(ann)
         if DEBUG and tmp[0] != 'DontCare':
+          # draw center
+          center = np.array(location).reshape(1, 3)
+          center_2d = project_to_image(center, calib)[0]
+          center = (int(center_2d[0]), int(center_2d[1]))
+          cv2.circle(image, center, 5, (0, 0, 255), -1)
+          # draw 3d bbox
           box_3d = compute_box_3d(dim, location, rotation_y)
           box_2d = project_to_image(box_3d, calib)
           # print('box_2d', box_2d)
